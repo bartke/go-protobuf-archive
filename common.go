@@ -5,7 +5,7 @@ import "encoding/binary"
 
 const (
 	version      = 0 // unversioned WIP
-	headerLength = 16
+	headerLength = 8
 
 	defaultEntryHeaderLength = 2
 )
@@ -20,7 +20,6 @@ type Header struct {
 	version     byte
 	dataOffset  uint16
 
-	NumberOfEntries   uint64
 	EntryHeaderLength byte
 }
 

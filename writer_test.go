@@ -12,7 +12,6 @@ func TestWriteHeader(t *testing.T) {
 	bw := bufio.NewWriter(&b)
 
 	w := NewWriter(bw)
-	w.Header.NumberOfEntries = 1234567890
 
 	w.WriteHeader()
 	w.Flush()
@@ -47,14 +46,6 @@ func TestWriteHeader(t *testing.T) {
 	if offsetN != headerLength {
 		t.Errorf("wrong data offset, expected: %v, got %v", headerLength, offsetN)
 	}
-
-	// check number of entries
-	entries := make([]byte, 8)
-	b.Read(entries)
-	entriesN := binary.LittleEndian.Uint64(entries)
-	if offsetN != headerLength {
-		t.Errorf("wrong number of entries, expected: %v, got %v", 1234567890, entriesN)
-	}
 }
 
 func TestWriter(t *testing.T) {
@@ -70,7 +61,7 @@ func TestWriter(t *testing.T) {
 	w.Flush()
 	bw.Flush()
 
-	rawHeader := make([]byte, 16)
+	rawHeader := make([]byte, headerLength)
 	b.Read(rawHeader)
 
 	rawEntryHeader := make([]byte, w.Header.EntryHeaderLength)

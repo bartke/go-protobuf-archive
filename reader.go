@@ -68,10 +68,6 @@ func (tr *Reader) readHeader() error {
 		return tr.err
 	}
 
-	tr.err = binary.Read(tr.r, binary.LittleEndian, &tr.Header.NumberOfEntries)
-	if tr.err != nil {
-		return tr.err
-	}
 	return tr.err
 }
 

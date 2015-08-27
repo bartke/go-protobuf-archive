@@ -55,15 +55,11 @@ func (tw *Writer) WriteHeader() error {
 	dataOffset := make([]byte, 2)
 	binary.LittleEndian.PutUint16(dataOffset, tw.Header.dataOffset)
 
-	numberOfEntries := make([]byte, 8)
-	binary.LittleEndian.PutUint64(numberOfEntries, tw.Header.NumberOfEntries)
-
 	header := make([]byte, headerLength)
 	copy(header[0:4], tw.Header.magicNumber[:])
 	copy(header[4:5], version)
 	copy(header[5:6], entryHeaderLength)
 	copy(header[6:8], dataOffset)
-	copy(header[8:16], numberOfEntries)
 
 	_, tw.err = tw.w.Write(header)
 	return tw.err
@@ -99,7 +95,7 @@ func (tw *Writer) Close() error {
 	if tw.err != nil || tw.closed {
 		return tw.err
 	}
-	//tw.Flush()
+	tw.Flush()
 	tw.closed = true
 	return tw.err
 }

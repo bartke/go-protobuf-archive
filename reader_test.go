@@ -12,7 +12,6 @@ func TestReadHeader(t *testing.T) {
 	bw := bufio.NewWriter(&b)
 
 	w := NewWriter(bw)
-	w.Header.NumberOfEntries = 1234567890
 
 	w.WriteHeader()
 	w.Flush()
@@ -21,8 +20,8 @@ func TestReadHeader(t *testing.T) {
 	br := bufio.NewReader(&b)
 	r := NewReader(br)
 
-	if r.Header.NumberOfEntries != 1234567890 {
-		t.Errorf("wrong number of entries, expected: %v, got %v", 1234567890, r.Header.NumberOfEntries)
+	if r.Header.EntryHeaderLength != defaultEntryHeaderLength {
+		t.Errorf("wrong default entry header length, expected: %v, got %v", defaultEntryHeaderLength, r.Header.EntryHeaderLength)
 	}
 }
 

@@ -11,41 +11,53 @@ import (
 )
 
 const (
-	numberOfSampleEntries = 128 * 1024
+	numberOfSampleEntries = 100000
 )
 
 func main() {
+	// write first half
 	parfile, err := os.Create("test.par")
 	if err != nil {
 		panic(err)
 	}
-	defer parfile.Close()
 
-	// write
 	w := par.NewWriter(parfile)
 
 	w.Header.EntryHeaderLength = 1
-	w.Header.NumberOfEntries = numberOfSampleEntries
 	err = w.WriteHeader()
 	if err != nil {
 		panic(err)
 	}
 
-	for i := 0; i < numberOfSampleEntries; i++ {
+	for i := 0; i < numberOfSampleEntries/2; i++ {
 		_, err = w.Write([]byte("test data" + strconv.Itoa(i)))
 		if err != nil {
 			panic(err)
 		}
 	}
-
 	w.Flush()
+	parfile.Close()
+
+	// append second half
+	parfile1, _ := os.OpenFile("test.par", os.O_WRONLY|os.O_APPEND, 0666)
+
+	w1 := par.NewWriter(parfile1)
+	w1.Header.EntryHeaderLength = 1
+
+	for i := numberOfSampleEntries / 2; i < numberOfSampleEntries; i++ {
+		_, err = w1.Write([]byte("test data" + strconv.Itoa(i)))
+		if err != nil {
+			panic(err)
+		}
+	}
+	w1.Flush()
+	parfile1.Close()
 
 	// read
-	parfile2, err := os.Open("test.par")
+	parfile2, _ := os.Open("test.par")
 	r := par.NewReader(parfile2)
 
 	fmt.Println("EntryHeaderLength: ", r.Header.EntryHeaderLength)
-	fmt.Println("Number of Entries: ", r.Header.NumberOfEntries)
 
 	var count int
 	for {
@@ -67,23 +79,20 @@ func main() {
 		count++
 	}
 
-	fmt.Println(count, "entries found")
+	fmt.Printf("found %d / %d entries\n", count, numberOfSampleEntries)
+	parfile2.Close()
 
-	// raw
-	stat, err := parfile.Stat()
+	// stats raw
+	plain, _ := os.Open("test.par")
+	defer plain.Close()
+
+	stat, err := plain.Stat()
 	if err != nil {
 		return
 	}
+	fmt.Printf("File size is %5d kiB, avg. %2d-bytes per entry\n", stat.Size()/1024, stat.Size()/numberOfSampleEntries)
 
-	fmt.Printf("File size is %5d kiB, avg. is %2d-bytes per entry\n", stat.Size()/1024, stat.Size()/numberOfSampleEntries)
-
-	// compressed
-	plain, err := os.Open("test.par")
-	if err != nil {
-		panic(err)
-	}
-	defer plain.Close()
-
+	// stats compressed
 	zfile, err := os.Create("test.par.gz")
 	if err != nil {
 		panic(err)
@@ -93,8 +102,8 @@ func main() {
 	zw := gzip.NewWriter(zfile)
 	defer zw.Close()
 
-	// chunk
-	chunk := make([]byte, 4<<20) // Read 4MB at a time
+	// chunks of 4MB
+	chunk := make([]byte, 4<<20)
 
 	for {
 		n, err := plain.Read(chunk)
@@ -115,6 +124,5 @@ func main() {
 	if err != nil {
 		return
 	}
-
-	fmt.Printf("File size is %5d kiB, avg. is %2d-bytes per entry\n", zstat.Size()/1024, zstat.Size()/numberOfSampleEntries)
+	fmt.Printf("File size is %5d kiB, avg. %2d-bytes per entry\n", zstat.Size()/1024, zstat.Size()/numberOfSampleEntries)
 }
